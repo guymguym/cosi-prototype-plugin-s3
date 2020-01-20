@@ -1,0 +1,63 @@
+#
+# TODO still WIP
+#
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cosi-global-config
+data:
+  COSI_GRPC_LISTEN: "localhost:8080"
+---
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: cosi-s3-plugin-secret
+#stringData:
+#  AWS_ACCESS_KEY_ID: ""
+#  AWS_SECRET_ACCESS_KEY: ""
+#  S3_ENDPOINT: ""
+#---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cosi-prototype-driver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cosi-prototype-driver
+  template:
+    metadata:
+      labels:
+        name: cosi-prototype-driver
+    spec:
+      serviceAccountName: cosi-prototype-driver
+      containers:
+        # COSI driver sidecar
+        - name: cosi-prototype-driver
+          image: jcoperh/cosi
+          command:
+            - cosi-prototype-driver
+          imagePullPolicy: Never
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "cosi-prototype-driver"
+          envFrom:
+            - configMapRef:
+                name: cosi-global-config
+        - name: cosi-s3-plugin
+          image: jcoperh/plugin
+          envFrom:
+            - configMapRef:
+                name: cosi-global-config
+            - secretRef:
+                name: cosi-s3-plugin-secret
