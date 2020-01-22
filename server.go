@@ -8,7 +8,10 @@ import (
 	"os"
 )
 
-const ENV_LISTEN = "COSI_GRPC_LISTEN"
+const (
+	ENV_S3_ENDPOINT = "S3_ENDPOINT"
+	ENV_LISTEN      = "COSI_GRPC_LISTEN"
+)
 const defaultListen = "localhost:8080"
 
 func configureHTTPListener() (listener net.Listener, err error) {
@@ -25,7 +28,6 @@ func configureHTTPListener() (listener net.Listener, err error) {
 	return listener, err
 }
 
-const ENV_S3_ENDPOINT = "S3_ENDPOINT"
 const retries = 3
 
 func configureS3Session() (sess *session.Session, err error) {
