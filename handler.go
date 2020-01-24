@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/golang/glog"
 	"github.com/yard-turkey/cosi-prototype-interface/cosi"
 )
 
@@ -12,20 +13,53 @@ type handler struct {
 	s3 *s3.S3
 }
 
-func newHandler(sess *session.Session) *handler {
+var _ cosi.ProvisionerServer = &handler{}
+
+func newHandler() *handler {
+	sess, err := configureS3Endpoint()
+	if err != nil {
+		panic(err)
+	}
 	return &handler{s3: s3.New(sess)}
 }
 
-func (s handler) Provision(context.Context, *cosi.ProvisionRequest) (*cosi.ProvisionResponse, error) {
-	return &cosi.ProvisionResponse{
-		Credentials:  nil,
-		Metadata:     nil,
-		Endpoint:     "",
-		Failed:       false,
-		ErrorMessage: "",
-	}, nil
+func (s handler) Provision(_ context.Context, req *cosi.ProvisionRequest) (*cosi.ProvisionResponse, error) {
+	glog.Info("provision request", "bucket name", req.GetRequestBucketName())
+	out, err := s.s3.CreateBucket(&s3.CreateBucketInput{
+		Bucket: &req.RequestBucketName,
+	})
+	if err != nil {
+		glog.Error("error creating bucket: " + err.Error())
+	}
+	val, err := s.s3.Client.Config.Credentials.Get()
+	if err != nil {
+		return nil, err
+	}
+	glog.Infof("create bucket response: %s", out.String())
+	return s.response(out, val), err
 }
 
-func (s handler) Deprovision(context.Context, *cosi.DeprovisionRequest) (*cosi.DeprovisionResponse, error) {
-	panic("implement me")
+func (s handler) response(out *s3.CreateBucketOutput, cred credentials.Value) *cosi.ProvisionResponse {
+	return &cosi.ProvisionResponse{
+		BucketName: *out.Location,
+		Endpoint:   s.s3.Endpoint,
+		Region:     *s.s3.Config.Region,
+		EnvironmentCredentials: map[string]string{
+			ENV_ACCESS_KEY_ID: cred.AccessKeyID,
+			ENV_SECRET_KEY: cred.SecretAccessKey,
+		},
+	}
+}
+
+func (s handler) Deprovision(_ context.Context, req *cosi.DeprovisionRequest) (*cosi.DeprovisionResponse, error) {
+	glog.Info("deprovision request", "bucket name", req.GetBucketName())
+	out, err := s.s3.DeleteBucket(&s3.DeleteBucketInput{
+		Bucket: &req.BucketName,
+	})
+	if err != nil {
+		glog.Error("error deleting bucket: " + err.Error())
+	}
+	return &cosi.DeprovisionResponse{
+		Message: out.String(),
+	}, err
 }

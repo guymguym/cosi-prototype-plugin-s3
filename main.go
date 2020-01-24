@@ -1,26 +1,27 @@
 package main
 
 import (
+	"flag"
+	"github.com/golang/glog"
 	"github.com/yard-turkey/cosi-prototype-interface/cosi"
 	"google.golang.org/grpc"
-	"k8s.io/klog/klogr"
 )
 
-var logf = klogr.New().WithName("cosi-s3-plugin")
+func init(){
+	flag.Parse()
+}
 
 func main() {
-	sess, err := configureS3Session()
-	if err != nil {
-		panic(err)
-	}
-
+	glog.Info("starting s3 plugin services")
 	rpcServer := grpc.NewServer()
-	cosi.RegisterProvisionerServer(rpcServer, newHandler(sess))
-
+	glog.Info("grpc server initialized")
+	glog.Info("configuring provisioner server")
+	cosi.RegisterProvisionerServer(rpcServer, newHandler())
 	listener, err := configureHTTPListener()
 	if err != nil {
 		panic(err)
 	}
+	glog.Info("starting grpc server, waiting for requests")
 	if err = rpcServer.Serve(listener); err != nil {
 		panic(err)
 	}

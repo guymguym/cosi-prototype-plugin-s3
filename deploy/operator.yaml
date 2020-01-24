@@ -8,7 +8,7 @@ metadata:
   name: cosi-global-config
 data:
   COSI_GRPC_LISTEN: "localhost:8080"
----
+#---
 #apiVersion: v1
 #kind: Secret
 #metadata:
@@ -17,29 +17,32 @@ data:
 #  AWS_ACCESS_KEY_ID: ""
 #  AWS_SECRET_ACCESS_KEY: ""
 #  S3_ENDPOINT: ""
-#---
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cosi-prototype-driver
+  name: cosi-s3
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: cosi-prototype-driver
+      name: cosi-s3
   template:
     metadata:
       labels:
-        name: cosi-prototype-driver
+        name: cosi-s3
     spec:
       serviceAccountName: cosi-prototype-driver
       containers:
-        # COSI driver sidecar
+        ############################################
+        # Sidecar Container (driver)
+        # This runs encapsulated k8s controller code
+        # to translate k8s APIs into GRPC methods
         - name: cosi-prototype-driver
           image: jcoperh/cosi
-          command:
-            - cosi-prototype-driver
           imagePullPolicy: Never
+          args:
+            - "--zap-devel"
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -54,10 +57,30 @@ spec:
           envFrom:
             - configMapRef:
                 name: cosi-global-config
+        ############################################
+        #  Plugin Container
+        #  This container runs a GRPC server and translates
+        #  rpcs into S3 operations.
         - name: cosi-s3-plugin
           image: jcoperh/plugin
+          imagePullPolicy: Never
+          args:
+            - "-alsologtostderr"
+          env:
+#            - name: AWS_CONFIG_FILE
+#              value: "/aws/.config/credentials"
+            - name: AWS_REGION
+              value: "us-east-1"
           envFrom:
             - configMapRef:
                 name: cosi-global-config
             - secretRef:
                 name: cosi-s3-plugin-secret
+#          volumeMounts:
+#            - mountPath: "/aws/.config/credentials"
+#              name: creds
+#      volumes:
+#        - name: creds
+#          secret:
+#            secretName: cosi-s3-plugin-secret
+#            optional: false

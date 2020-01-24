@@ -7,6 +7,7 @@ require (
 	github.com/minio/minio-go/v6 v6.0.44 // indirect
 	github.com/yard-turkey/cosi-prototype-interface v0.0.0
 	google.golang.org/grpc v1.26.0
+	k8s.io/klog v0.4.0
 	sigs.k8s.io/controller-runtime v0.4.0
 )
 
