@@ -16,7 +16,6 @@ data:
 #stringData:
 #  AWS_ACCESS_KEY_ID: ""
 #  AWS_SECRET_ACCESS_KEY: ""
-#  S3_ENDPOINT: ""
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -67,10 +66,12 @@ spec:
           args:
             - "-alsologtostderr"
           env:
-#            - name: AWS_CONFIG_FILE
-#              value: "/aws/.config/credentials"
             - name: AWS_REGION
               value: "us-east-1"
+            # For use when creating a secret directly from a local $HOME/.aws/credentials file.
+            # Uncomment this env var and the volumes & volumeMounts stanzas to mounth the secret.
+#            - name: AWS_SHARED_CREDENTIALS_FILE
+#              value: "/aws/.config/credentials"
           envFrom:
             - configMapRef:
                 name: cosi-global-config
