@@ -46,7 +46,7 @@ func (s handler) response(out *s3.CreateBucketOutput, cred credentials.Value) *c
 		Region:     *s.s3.Config.Region,
 		EnvironmentCredentials: map[string]string{
 			ENV_ACCESS_KEY_ID: cred.AccessKeyID,
-			ENV_SECRET_KEY: cred.SecretAccessKey,
+			ENV_SECRET_KEY:    cred.SecretAccessKey,
 		},
 	}
 }
@@ -61,6 +61,11 @@ func (s handler) Deprovision(_ context.Context, req *cosi.DeprovisionRequest) (*
 	}
 	glog.Info("delete bucket success, bucket %v:", req.GetBucketName())
 	return &cosi.DeprovisionResponse{
-		Message: out.String(),
+		Message: func() string {
+			if out == nil {
+				return ""
+			}
+			return out.String()
+		} (),
 	}, err
 }
