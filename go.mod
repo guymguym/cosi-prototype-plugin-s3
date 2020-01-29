@@ -10,5 +10,3 @@ require (
 	k8s.io/klog v0.4.0
 	sigs.k8s.io/controller-runtime v0.4.0
 )
-
-replace github.com/yard-turkey/cosi-prototype-interface v0.0.0 => /Users/jcope/Workspace/cosi-prototype/cosi-prototype-interface
