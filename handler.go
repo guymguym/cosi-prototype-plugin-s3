@@ -23,6 +23,12 @@ func newHandler() *handler {
 	return &handler{s3: s3.New(sess)}
 }
 
+const pluginName = "s3-prototype-plugin"
+
+func (s handler) GetPluginName(context.Context, *cosi.PluginNameRequest) (*cosi.PluginNameResponse, error) {
+	return &cosi.PluginNameResponse{Name: pluginName}, nil
+}
+
 func (s handler) Provision(_ context.Context, req *cosi.ProvisionRequest) (*cosi.ProvisionResponse, error) {
 	glog.Infof("provision request, bucket: %v", req.GetRequestBucketName())
 	out, err := s.s3.CreateBucket(&s3.CreateBucketInput{
@@ -66,6 +72,6 @@ func (s handler) Deprovision(_ context.Context, req *cosi.DeprovisionRequest) (*
 				return ""
 			}
 			return out.String()
-		} (),
+		}(),
 	}, err
 }
