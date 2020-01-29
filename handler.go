@@ -42,10 +42,10 @@ func (s handler) Provision(_ context.Context, req *cosi.ProvisionRequest) (*cosi
 		return nil, err
 	}
 	glog.Infof("create bucket success, bucket: %v", req.GetRequestBucketName())
-	return s.response(out, val), err
+	return s.provisionResponse(out, val), err
 }
 
-func (s handler) response(out *s3.CreateBucketOutput, cred credentials.Value) *cosi.ProvisionResponse {
+func (s handler) provisionResponse(out *s3.CreateBucketOutput, cred credentials.Value) *cosi.ProvisionResponse {
 	return &cosi.ProvisionResponse{
 		BucketName: *out.Location,
 		Endpoint:   s.s3.Endpoint,
@@ -66,12 +66,15 @@ func (s handler) Deprovision(_ context.Context, req *cosi.DeprovisionRequest) (*
 		glog.Error("error deleting bucket: " + err.Error())
 	}
 	glog.Info("delete bucket success, bucket %v:", req.GetBucketName())
-	return &cosi.DeprovisionResponse{
-		Message: func() string {
-			if out == nil {
-				return ""
-			}
-			return out.String()
-		}(),
-	}, err
+	return s.deprovisionResponse(out), err
+}
+
+func (s handler) deprovisionResponse(out *s3.DeleteBucketOutput) *cosi.DeprovisionResponse {
+	var msg string
+	if out != nil {
+		msg = out.String()
+	} else {
+		msg = ""
+	}
+	return &cosi.DeprovisionResponse{Message: msg}
 }
