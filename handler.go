@@ -58,14 +58,14 @@ func (s handler) provisionResponse(out *s3.CreateBucketOutput, cred credentials.
 }
 
 func (s handler) Deprovision(_ context.Context, req *cosi.DeprovisionRequest) (*cosi.DeprovisionResponse, error) {
-	glog.Info("deprovision request, bucket: %v", req.GetBucketName())
+	glog.Infof("deprovision request, bucket: %v", req.GetBucketName())
 	out, err := s.s3.DeleteBucket(&s3.DeleteBucketInput{
 		Bucket: &req.BucketName,
 	})
 	if err != nil {
 		glog.Error("error deleting bucket: " + err.Error())
 	}
-	glog.Info("delete bucket success, bucket %v:", req.GetBucketName())
+	glog.Infof("delete bucket success, bucket %v:", req.GetBucketName())
 	return s.deprovisionResponse(out), err
 }
 
