@@ -24,7 +24,7 @@ func init() {
 	var ok bool
 	certPath, ok = os.LookupEnv(ENV_CERT_PATH)
 	if ! ok {
-		glog.Fatalf("Env var %s not defined, required", ENV_CERT_PATH)
+		glog.Fatalf("env var %s not defined, required", ENV_CERT_PATH)
 	}
 	keyPath, ok = os.LookupEnv(ENV_KEY_PATH)
 	if ! ok {
